@@ -1,13 +1,14 @@
 let ma = document.getElementById('maChart').getContext('2d');
 let wma = document.getElementById('wmaChart').getContext('2d');
+let es = document.getElementById('esChart').getContext('2d');
 
 // colors
 const PURPLE = 'rgb(150, 99, 132)';
 const BLUE = 'rgb(99, 99, 132)';
 
 // todo: make generation, not hard code
-const realValues = [40, 45, 89, 80, 60, 41, 32, 36];
-const LABELS = ['10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30'];
+const realValues = [40, 45, 50, 59, 67, 71, 70, 64, 60];
+const LABELS = ['10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30', '14:30'];
 
 /**
  * Creates dataSet
@@ -93,7 +94,6 @@ function predictMaList(realValues) {
 }
 
 const cpuLoadMaPredicted = predictedDataSet(predictMaList(realValues));
-
 let chartMa = lineChart(ma, LABELS, [cpuLoadReal, cpuLoadMaPredicted]);
 
 ///////////////////////////////
@@ -129,11 +129,42 @@ function predictWmaList(realValues) {
 }
 
 const cpuLoadWmaPredicted = predictedDataSet(predictWmaList(realValues));
-
 let chartWma = lineChart(wma, LABELS, [cpuLoadReal, cpuLoadWmaPredicted]);
 
+/////////////////////////////
+/// Exponential Smoothing ///
+/////////////////////////////
 
+const ALPHA = 0.7; // [0..1]
 
+function predictES(prevActual, prevPredicted, alpha) {
+    return (alpha * prevActual) + ((1 - alpha) * prevPredicted);
+}
 
+function predictESList(realValues) {
+    let predictedValues = [];
+    for (let i = 0; i < realValues.length; ++i) {
+        if (i === 0) {
+            predictedValues[i] = 0;
+        }
+        else if (i === 1) {
+            predictedValues[i] = realValues[i - 1];
+        }
+        else {
+            predictedValues[i] = predictES(realValues[i - 1], predictedValues[i - 1], ALPHA);
+        }
+    }
+    return predictedValues;
+}
+
+console.dir({
+    '0) real list' : realValues,
+    '1) predicted ma list' : predictMaList(realValues),
+    '2) predicted wma list' : predictWmaList(realValues),
+    '3) predicted es list' : predictESList(realValues)
+});
+
+const cpuLoadESPredicted = predictedDataSet(predictESList(realValues));
+let chartEs = lineChart(es, LABELS, [cpuLoadReal, cpuLoadESPredicted]);
 
 
