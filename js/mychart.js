@@ -7,8 +7,8 @@ const PURPLE = 'rgb(150, 99, 132)';
 const BLUE = 'rgb(99, 99, 132)';
 
 // todo: make generation, not hard code
-const realValues = [40, 45, 50, 59, 67, 71, 70, 64, 60];
-const LABELS = ['10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30', '14:30'];
+const realValues = [40, 45, 50, 59, 67, 71, 70, 64, 60, 56, 50];
+const LABELS = ['10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30', '14:00', '14:30', '15:00'];
 
 /**
  * Creates dataSet
@@ -56,6 +56,17 @@ function lineChart(ctx, labels, _dataSets) {
             }
         }
     });
+}
+
+function averageMistake(realList, predictedList) {
+    if (realList.length !== predictedList.length) {
+        throw 'real and predicted lists must be the same length';
+    }
+    let allMistake = 0;
+    for (let i = 0; i < realList.length; i++) {
+        allMistake += Math.abs(realList[i] - predictedList[i]);
+    }
+    return (allMistake / realList.length).toFixed(2);
 }
 
 const cpuLoadReal = dataSet("CPU load (%) - real", realValues, PURPLE);
@@ -135,7 +146,7 @@ let chartWma = lineChart(wma, LABELS, [cpuLoadReal, cpuLoadWmaPredicted]);
 /// Exponential Smoothing ///
 /////////////////////////////
 
-const ALPHA = 0.7; // [0..1]
+const ALPHA = 0.8; // [0..1]
 
 function predictES(prevActual, prevPredicted, alpha) {
     return (alpha * prevActual) + ((1 - alpha) * prevPredicted);
@@ -157,14 +168,24 @@ function predictESList(realValues) {
     return predictedValues;
 }
 
+const cpuLoadESPredicted = predictedDataSet(predictESList(realValues));
+let chartEs = lineChart(es, LABELS, [cpuLoadReal, cpuLoadESPredicted]);
+
+
+///////////////////////////////
+
+// set mistakes
+const mistakeText = 'Average mistake = ';
+document.getElementById("maMistake").innerHTML = mistakeText + averageMistake(realValues, predictMaList(realValues));
+document.getElementById("wmaMistake").innerHTML = mistakeText + averageMistake(realValues, predictWmaList(realValues));
+document.getElementById("esMistake").innerHTML = mistakeText + averageMistake(realValues, predictESList(realValues));
+
+// compare results
 console.dir({
     '0) real list' : realValues,
     '1) predicted ma list' : predictMaList(realValues),
     '2) predicted wma list' : predictWmaList(realValues),
     '3) predicted es list' : predictESList(realValues)
 });
-
-const cpuLoadESPredicted = predictedDataSet(predictESList(realValues));
-let chartEs = lineChart(es, LABELS, [cpuLoadReal, cpuLoadESPredicted]);
 
 
