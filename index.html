@@ -21,6 +21,14 @@
 <div class="chart">
     <h2>Weighted Moving average prediction</h2>
     <p id="wmaMistake"></p>
+
+    <div class="slideContainer">
+        <p>Previous :   <span id="wmaSliderValue"></span>
+           Previous 2 : <span id="wmaSliderValue2"></span>
+        </p>
+        <input type="range" min="0" max="100" value="50" class="slider" id="wmaSlider">
+    </div>
+
     <canvas id="wmaChart"></canvas>
 </div>
 

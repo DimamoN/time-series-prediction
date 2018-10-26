@@ -2,6 +2,32 @@ let ma = document.getElementById('maChart').getContext('2d');
 let wma = document.getElementById('wmaChart').getContext('2d');
 let es = document.getElementById('esChart').getContext('2d');
 
+///////////
+let chartMa;
+let chartWma;
+let chartEs;
+///////////
+
+
+// WMA SLIDER
+let wmaSlider = document.getElementById("wmaSlider");
+let wmaSliderValue = document.getElementById("wmaSliderValue");
+let wmaSliderValue2 = document.getElementById("wmaSliderValue2");
+
+// set default values
+wmaSliderValue.innerHTML = '0.5';
+wmaSliderValue2.innerHTML = (1 - parseFloat(wmaSliderValue.innerHTML)).toFixed(1);
+
+wmaSlider.oninput = function() {
+    const prevRate = this.value / 100;
+    wmaSliderValue.innerHTML = prevRate;
+    wmaSliderValue2.innerHTML = (1 - prevRate).toFixed(2);
+    const cpuLoadWmaPredicted = predictedDataSet(predictWmaList(realValues, prevRate));
+    chartWma = lineChart(wma, LABELS, [cpuLoadReal, cpuLoadWmaPredicted]);
+    setWmaMistake(prevRate);
+};
+
+
 // colors
 const PURPLE = 'rgb(150, 99, 132)';
 const BLUE = 'rgb(99, 99, 132)';
@@ -53,6 +79,9 @@ function lineChart(ctx, labels, _dataSets) {
                         suggestedMax: 100
                     }
                 }]
+            },
+            animation: {
+                duration: 0
             }
         }
     });
@@ -105,7 +134,7 @@ function predictMaList(realValues) {
 }
 
 const cpuLoadMaPredicted = predictedDataSet(predictMaList(realValues));
-let chartMa = lineChart(ma, LABELS, [cpuLoadReal, cpuLoadMaPredicted]);
+chartMa = lineChart(ma, LABELS, [cpuLoadReal, cpuLoadMaPredicted]);
 
 ///////////////////////////////
 /// Weighted Moving Average ///
@@ -119,7 +148,7 @@ function predictWma(prev, prev2, prevRate, prev2Rate) {
     return (prevRate * prev) + (prev2Rate * prev2);
 }
 
-function predictWmaList(realValues) {
+function predictWmaList(realValues, prevRate = PREV_RATE) {
     let predictedValues = [];
     for (let i = 0; i < realValues.length; ++i) {
         if (i === 0) {
@@ -133,20 +162,20 @@ function predictWmaList(realValues) {
                 realValues[i - 1],
                 realValues[i - 2],
                 PREV_RATE,
-                PREV2_RATE);
+                1 - prevRate);
         }
     }
     return predictedValues;
 }
 
 const cpuLoadWmaPredicted = predictedDataSet(predictWmaList(realValues));
-let chartWma = lineChart(wma, LABELS, [cpuLoadReal, cpuLoadWmaPredicted]);
+chartWma = lineChart(wma, LABELS, [cpuLoadReal, cpuLoadWmaPredicted]);
 
 /////////////////////////////
 /// Exponential Smoothing ///
 /////////////////////////////
 
-const ALPHA = 0.8; // [0..1]
+const ALPHA = 0.75; // [0..1]
 
 function predictES(prevActual, prevPredicted, alpha) {
     return (alpha * prevActual) + ((1 - alpha) * prevPredicted);
@@ -169,16 +198,32 @@ function predictESList(realValues) {
 }
 
 const cpuLoadESPredicted = predictedDataSet(predictESList(realValues));
-let chartEs = lineChart(es, LABELS, [cpuLoadReal, cpuLoadESPredicted]);
+chartEs = lineChart(es, LABELS, [cpuLoadReal, cpuLoadESPredicted]);
 
 
 ///////////////////////////////
 
 // set mistakes
 const mistakeText = 'Average mistake = ';
-document.getElementById("maMistake").innerHTML = mistakeText + averageMistake(realValues, predictMaList(realValues));
-document.getElementById("wmaMistake").innerHTML = mistakeText + averageMistake(realValues, predictWmaList(realValues));
-document.getElementById("esMistake").innerHTML = mistakeText + averageMistake(realValues, predictESList(realValues));
+
+function setWmaMistake(prevRate = PREV_RATE) {
+    document.getElementById("wmaMistake").innerHTML =
+        mistakeText + averageMistake(realValues, predictWmaList(realValues, prevRate));
+}
+
+function setMaMistake() {
+    document.getElementById("maMistake").innerHTML =
+        mistakeText + averageMistake(realValues, predictMaList(realValues));
+}
+
+function setEsMistake() {
+    document.getElementById("esMistake").innerHTML =
+        mistakeText + averageMistake(realValues, predictESList(realValues));
+}
+
+setMaMistake();
+setWmaMistake();
+setEsMistake();
 
 // compare results
 console.dir({
