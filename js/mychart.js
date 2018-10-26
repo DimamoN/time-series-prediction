@@ -140,7 +140,7 @@ chartMa = lineChart(ma, LABELS, [cpuLoadReal, cpuLoadMaPredicted]);
 /// Weighted Moving Average ///
 //////////////////////////////
 
-const PREV_RATE = 0.75;
+const PREV_RATE = 0.5;
 const PREV2_RATE = 0.25;
 
 // (prevRate + prev2Rate) == 1
@@ -161,7 +161,7 @@ function predictWmaList(realValues, prevRate = PREV_RATE) {
             predictedValues[i] = predictWma(
                 realValues[i - 1],
                 realValues[i - 2],
-                PREV_RATE,
+                prevRate,
                 1 - prevRate);
         }
     }
