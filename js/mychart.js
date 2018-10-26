@@ -28,6 +28,22 @@ wmaSlider.oninput = function() {
 };
 
 
+// ES SLIDER
+let esSlider = document.getElementById("esSlider");
+let esSliderValue = document.getElementById("esSliderValue");
+
+// set default values
+esSliderValue.innerHTML = '0.5';
+
+esSlider.oninput = function() {
+    const alpha = this.value / 100;
+    esSliderValue.innerHTML = alpha;
+    const cpuLoadEsPredicted = predictedDataSet(predictESList(realValues, alpha));
+    chartEs = lineChart(es, LABELS, [cpuLoadReal, cpuLoadEsPredicted]);
+    setEsMistake(alpha);
+};
+
+
 // colors
 const PURPLE = 'rgb(150, 99, 132)';
 const BLUE = 'rgb(99, 99, 132)';
@@ -181,7 +197,7 @@ function predictES(prevActual, prevPredicted, alpha) {
     return (alpha * prevActual) + ((1 - alpha) * prevPredicted);
 }
 
-function predictESList(realValues) {
+function predictESList(realValues, alpha = ALPHA) {
     let predictedValues = [];
     for (let i = 0; i < realValues.length; ++i) {
         if (i === 0) {
@@ -191,7 +207,7 @@ function predictESList(realValues) {
             predictedValues[i] = realValues[i - 1];
         }
         else {
-            predictedValues[i] = predictES(realValues[i - 1], predictedValues[i - 1], ALPHA);
+            predictedValues[i] = predictES(realValues[i - 1], predictedValues[i - 1], alpha);
         }
     }
     return predictedValues;
@@ -216,9 +232,9 @@ function setMaMistake() {
         mistakeText + averageMistake(realValues, predictMaList(realValues));
 }
 
-function setEsMistake() {
+function setEsMistake(alpha = ALPHA) {
     document.getElementById("esMistake").innerHTML =
-        mistakeText + averageMistake(realValues, predictESList(realValues));
+        mistakeText + averageMistake(realValues, predictESList(realValues, alpha));
 }
 
 setMaMistake();

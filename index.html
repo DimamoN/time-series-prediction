@@ -35,6 +35,13 @@
 <div class="chart">
     <h2>Exponential Smoothing prediction</h2>
     <p id="esMistake"></p>
+
+    <div class="slideContainer">
+        <p>Alpha :   <span id="esSliderValue"></span>
+        </p>
+        <input type="range" min="0" max="100" value="50" class="slider" id="esSlider">
+    </div>
+
     <canvas id="esChart"></canvas>
 </div>
 
