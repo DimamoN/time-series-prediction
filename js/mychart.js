@@ -42,15 +42,18 @@ btnBestFit.onclick = function() {
         document.getElementById("esMistake").innerHTML = mistakeText + minMistake;
         esSlider.value = alpha * 100;
         esSliderValue.innerHTML = alpha + '';
+        //update chart
+        const cpuLoadEsPredicted = predictedDataSet(predictESList(realValues, alpha));
+        chartEs = lineChart(es, LABELS, [cpuLoadReal, cpuLoadEsPredicted]);
+        setEsMistake(alpha);
+
     }
 };
 
-///////////
+// charts
 let chartMa;
 let chartWma;
 let chartEs;
-///////////
-
 
 // WMA SLIDER
 let wmaSlider = document.getElementById("wmaSlider");
