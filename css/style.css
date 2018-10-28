@@ -13,3 +13,7 @@ div.chart {
 div.firstChart {
     margin-top: 10px;
 }
+
+div#controls {
+    position: fixed;
+}

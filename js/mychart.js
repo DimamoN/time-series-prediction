@@ -1,6 +1,49 @@
+'use strict';
+
 let ma = document.getElementById('maChart').getContext('2d');
 let wma = document.getElementById('wmaChart').getContext('2d');
 let es = document.getElementById('esChart').getContext('2d');
+
+let btnBestFit = document.getElementById('bestFit');
+
+btnBestFit.onclick = function() {
+    {
+        // best fit WMA
+        let minMistake = '99999';
+        let prevParam = PREV_RATE;
+        for (let i = 0; i <= 100; ++i) {
+            const mistake = averageMistake(realValues, predictWmaList(realValues, i / 100));
+            if (parseFloat(mistake) < parseFloat(minMistake)) {
+                minMistake = mistake;
+                prevParam = (i / 100).toFixed(2);
+            }
+        }
+        //todo: refactor !!!! OR IT WILL BE PAINFUL TO CONTINUE!
+        wmaSliderValue.innerHTML = prevParam + '';
+        wmaSliderValue2.innerHTML = (1 - parseFloat(wmaSliderValue.innerHTML)).toFixed(1);
+        wmaSlider.value = prevParam * 100;
+        // update chart
+        const cpuLoadWmaPredicted = predictedDataSet(predictWmaList(realValues, prevParam));
+        chartWma = lineChart(wma, LABELS, [cpuLoadReal, cpuLoadWmaPredicted]);
+        setWmaMistake(prevParam);
+    }
+
+    {
+        // best fit ES
+        let minMistake = '99999';
+        let alpha = ALPHA;
+        for (let i = 0; i <= 100; ++i) {
+            const mistake = averageMistake(realValues, predictESList(realValues, i / 100));
+            if (parseFloat(mistake) < parseFloat(minMistake)) {
+                minMistake = mistake;
+                alpha = (i / 100).toFixed(2);
+            }
+        }
+        document.getElementById("esMistake").innerHTML = mistakeText + minMistake;
+        esSlider.value = alpha * 100;
+        esSliderValue.innerHTML = alpha + '';
+    }
+};
 
 ///////////
 let chartMa;
@@ -48,9 +91,13 @@ esSlider.oninput = function() {
 const PURPLE = 'rgb(150, 99, 132)';
 const BLUE = 'rgb(99, 99, 132)';
 
+
+const EXPONENTIAL_DATA_SET = [40, 43, 40, 47, 45, 52, 50, 60, 55, 50, 40, 27, 34, 36, 45];
+
 // todo: make generation, not hard code
-const realValues = [40, 45, 50, 59, 67, 71, 70, 64, 60, 56, 50];
-const LABELS = ['10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30', '14:00', '14:30', '15:00'];
+const realValues = [40, 43, 40, 47, 45, 52, 50, 60, 55, 50, 40, 27, 34, 36, 45];
+const LABELS = ['10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30', '14:00', '14:30', '15:00',
+                '15:30', '16:00', '16:30', '17:30'];
 
 /**
  * Creates dataSet
