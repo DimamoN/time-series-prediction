@@ -1,16 +1,11 @@
 'use strict';
 
-let ma = document.getElementById('maChart').getContext('2d');
-let wma = document.getElementById('wmaChart').getContext('2d');
-let es = document.getElementById('esChart').getContext('2d');
-
 let btnBestFit = document.getElementById('bestFit');
-
 let chartMa, chartWma, chartEs;
 
-// colors
 const PURPLE = 'rgb(150, 99, 132)';
 const BLUE = 'rgb(99, 99, 132)';
+const MISTAKE_TEXT = 'Average mistake = ';
 
 // todo: make generation, not hard code
 const EXPONENTIAL_DATA_SET = [40, 43, 40, 47, 45, 52, 50, 60, 55, 50, 40, 27, 34, 36, 45];
@@ -35,9 +30,9 @@ function dataSet(name, dataList, color = BLUE) {
     };
 }
 
-function predictedDataSet(dataList) {
-    return dataSet("CPU load (%) - predicted", dataList, BLUE);
-}
+const CPU_LOAD_REAL = dataSet("CPU load (%) - real", realValues, PURPLE);
+
+let predictedDataSet = (dataList) => dataSet("CPU load (%) - predicted", dataList, BLUE);
 
 /**
  * Creates line chart
@@ -80,10 +75,8 @@ function averageMistake(realList, predictedList) {
     return (allMistake / realList.length).toFixed(2);
 }
 
-const CPU_LOAD_REAL = dataSet("CPU load (%) - real", realValues, PURPLE);
-
 let maData = {
-    context: ma,
+    context: document.getElementById('maChart').getContext('2d'),
     /**
      * Calculates next predicted element using Moving Average method
      * with period = 2
@@ -108,13 +101,19 @@ let maData = {
             }
         }
         return predictedValues;
+    },
+    
+    // view
+    setMistake: function () {
+        document.getElementById("maMistake").innerHTML =
+            MISTAKE_TEXT + averageMistake(realValues, maData.predictList(realValues));
     }
 };
 
 let wmaData = {
     prevRate: 0.5,
     prev2Rate: 0.5,
-    context: wma,
+    context: document.getElementById('wmaChart').getContext('2d'),
 
     predict: function (prev, prev2, prevRate, prev2Rate) {
         return (prevRate * prev) + (prev2Rate * prev2);
@@ -137,12 +136,18 @@ let wmaData = {
             }
         }
         return predictedValues;
+    },
+
+    // view
+    setMistake: function() {
+        document.getElementById("wmaMistake").innerHTML =
+            MISTAKE_TEXT + averageMistake(realValues, wmaData.predictList(realValues, this.prevRate));
     }
 };
 
 let esData = {
     alpha: 0.75,
-    context: es,
+    context: document.getElementById('esChart').getContext('2d'),
 
     predict: function (prevActual, prevPredicted, alpha) {
         return (alpha * prevActual) + ((1 - alpha) * prevPredicted);
@@ -161,8 +166,16 @@ let esData = {
             }
         }
         return predictedValues;
+    },
+
+    // view
+    setMistake: function () {
+        document.getElementById("esMistake").innerHTML =
+            MISTAKE_TEXT + averageMistake(realValues, esData.predictList(realValues, this.alpha));
     }
 };
+
+let charts = [maData, wmaData, esData];
 
 function buildChart(chartData) {
     const cpuLoadPredicted = predictedDataSet(chartData.predictList(realValues));
@@ -190,7 +203,7 @@ btnBestFit.onclick = function () {
         // update chart
         wmaData.prevRate = prevParam;
         buildChart(wmaData);
-        setWmaMistake(prevParam);
+        wmaData.setMistake();
     }
 
     {
@@ -204,14 +217,14 @@ btnBestFit.onclick = function () {
                 alpha = (i / 100).toFixed(2);
             }
         }
-        document.getElementById("esMistake").innerHTML = mistakeText + minMistake;
+        document.getElementById("esMistake").innerHTML = MISTAKE_TEXT + minMistake;
         esSlider.value = alpha * 100;
         esAlpha.innerHTML = alpha + '';
 
         //update chart
         esData.alpha = alpha;
         buildChart(esData);
-        setEsMistake(alpha);
+        esData.setMistake();
     }
 };
 
@@ -225,12 +238,10 @@ let wmaPrev2Rate = document.getElementById("wmaPrev2Rate");
     wmaPrev2Rate.innerHTML = (1 - parseFloat(wmaPrevRate.innerHTML)).toFixed(1);
 
     wmaSlider.oninput = function () {
-        const prevRate = this.value / 100;
-        wmaPrevRate.innerHTML = prevRate;
-        wmaPrev2Rate.innerHTML = (1 - prevRate).toFixed(2);
-        const cpuLoadWmaPredicted = predictedDataSet(wmaData.predictList(realValues, prevRate));
-        chartWma = lineChart(wma, LABELS, [CPU_LOAD_REAL, cpuLoadWmaPredicted]);
-        setWmaMistake(prevRate);
+        wmaData.prevRate = this.value / 100;
+        wmaPrev2Rate.innerHTML = (1 - wmaData.prevRate).toFixed(2);
+        buildChart(wmaData);
+        wmaData.setMistake();
     };
 }
 
@@ -242,38 +253,17 @@ let esAlpha = document.getElementById("esAlpha");
     esAlpha.innerHTML = '0.5';
 
     esSlider.oninput = function () {
-        const alpha = this.value / 100;
-        esAlpha.innerHTML = alpha;
-        const cpuLoadEsPredicted = predictedDataSet(esData.predictList(realValues, alpha));
-        chartEs = lineChart(es, LABELS, [CPU_LOAD_REAL, cpuLoadEsPredicted]);
-        setEsMistake(alpha);
+        esData.alpha = this.value / 100;
+        esAlpha.innerHTML = esData.alpha;
+        buildChart(esData);
+        esData.setMistake();
     };
 }
 
+// view //
 chartMa = buildChart(maData);
 chartWma = buildChart(wmaData);
 chartEs = buildChart(esData);
-
-// set mistakes //
-const mistakeText = 'Average mistake = ';
-
-function setWmaMistake(prevRate = wmaData.prevRate) {
-    document.getElementById("wmaMistake").innerHTML =
-        mistakeText + averageMistake(realValues, wmaData.predictList(realValues, prevRate));
-}
-
-function setMaMistake() {
-    document.getElementById("maMistake").innerHTML =
-        mistakeText + averageMistake(realValues, maData.predictList(realValues));
-}
-
-function setEsMistake(alpha = esData.alpha) {
-    document.getElementById("esMistake").innerHTML =
-        mistakeText + averageMistake(realValues, esData.predictList(realValues, alpha));
-}
-
-setMaMistake();
-setWmaMistake();
-setEsMistake();
+charts.forEach(c => c.setMistake());
 
 
