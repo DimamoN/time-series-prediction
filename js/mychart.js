@@ -82,7 +82,7 @@ function averageMistake(realList, predictedList) {
 
 const CPU_LOAD_REAL = dataSet("CPU load (%) - real", realValues, PURPLE);
 
-let chartMaNew = {
+let maData = {
     context: ma,
     /**
      * Calculates next predicted element using Moving Average method
@@ -111,7 +111,7 @@ let chartMaNew = {
     }
 };
 
-let chartWmaNew = {
+let wmaData = {
     prevRate: 0.5,
     prev2Rate: 0.5,
     context: wma,
@@ -140,7 +140,7 @@ let chartWmaNew = {
     }
 };
 
-let chartEsNew = {
+let esData = {
     alpha: 0.75,
     context: es,
 
@@ -164,39 +164,41 @@ let chartEsNew = {
     }
 };
 
-function buildChart(chart) {
-    const cpuLoadPredicted = predictedDataSet(chart.predictList(realValues));
-    return lineChart(chart.context, LABELS, [CPU_LOAD_REAL, cpuLoadPredicted]);
+function buildChart(chartData) {
+    const cpuLoadPredicted = predictedDataSet(chartData.predictList(realValues));
+    return lineChart(chartData.context, LABELS, [CPU_LOAD_REAL, cpuLoadPredicted]);
 }
 
 btnBestFit.onclick = function () {
     {
         // best fit WMA
         let minMistake = '99999';
-        let prevParam = chartWmaNew.prevRate;
+        let prevParam = wmaData.prevRate;
         for (let i = 0; i <= 100; ++i) {
-            const mistake = averageMistake(realValues, chartWmaNew.predictList(realValues, i / 100));
+            const mistake = averageMistake(realValues, wmaData.predictList(realValues, i / 100));
             if (parseFloat(mistake) < parseFloat(minMistake)) {
                 minMistake = mistake;
                 prevParam = (i / 100).toFixed(2);
             }
         }
+
         //todo: refactor !!!! OR IT WILL BE PAINFUL TO CONTINUE!
         wmaPrevRate.innerHTML = prevParam + '';
         wmaPrev2Rate.innerHTML = (1 - parseFloat(wmaPrevRate.innerHTML)).toFixed(1);
         wmaSlider.value = prevParam * 100;
+
         // update chart
-        const cpuLoadWmaPredicted = predictedDataSet(chartWmaNew.predictList(realValues, prevParam));
-        chartWma = lineChart(wma, LABELS, [CPU_LOAD_REAL, cpuLoadWmaPredicted]);
+        wmaData.prevRate = prevParam;
+        buildChart(wmaData);
         setWmaMistake(prevParam);
     }
 
     {
         // best fit ES
         let minMistake = '99999';
-        let alpha = ALPHA;
+        let alpha = esData.alpha;
         for (let i = 0; i <= 100; ++i) {
-            const mistake = averageMistake(realValues, chartEsNew.predictList(realValues, i / 100));
+            const mistake = averageMistake(realValues, esData.predictList(realValues, i / 100));
             if (parseFloat(mistake) < parseFloat(minMistake)) {
                 minMistake = mistake;
                 alpha = (i / 100).toFixed(2);
@@ -204,12 +206,12 @@ btnBestFit.onclick = function () {
         }
         document.getElementById("esMistake").innerHTML = mistakeText + minMistake;
         esSlider.value = alpha * 100;
-        esSliderValue.innerHTML = alpha + '';
-        //update chart
-        const cpuLoadEsPredicted = predictedDataSet(chartEsNew.predictList(realValues, alpha));
-        chartEs = lineChart(es, LABELS, [CPU_LOAD_REAL, cpuLoadEsPredicted]);
-        setEsMistake(alpha);
+        esAlpha.innerHTML = alpha + '';
 
+        //update chart
+        esData.alpha = alpha;
+        buildChart(esData);
+        setEsMistake(alpha);
     }
 };
 
@@ -226,7 +228,7 @@ let wmaPrev2Rate = document.getElementById("wmaPrev2Rate");
         const prevRate = this.value / 100;
         wmaPrevRate.innerHTML = prevRate;
         wmaPrev2Rate.innerHTML = (1 - prevRate).toFixed(2);
-        const cpuLoadWmaPredicted = predictedDataSet(chartWmaNew.predictList(realValues, prevRate));
+        const cpuLoadWmaPredicted = predictedDataSet(wmaData.predictList(realValues, prevRate));
         chartWma = lineChart(wma, LABELS, [CPU_LOAD_REAL, cpuLoadWmaPredicted]);
         setWmaMistake(prevRate);
     };
@@ -234,40 +236,40 @@ let wmaPrev2Rate = document.getElementById("wmaPrev2Rate");
 
 // ES SLIDER
 let esSlider = document.getElementById("esSlider");
-let esSliderValue = document.getElementById("esSliderValue");
+let esAlpha = document.getElementById("esAlpha");
 {
     // set default values
-    esSliderValue.innerHTML = '0.5';
+    esAlpha.innerHTML = '0.5';
 
     esSlider.oninput = function () {
         const alpha = this.value / 100;
-        esSliderValue.innerHTML = alpha;
-        const cpuLoadEsPredicted = predictedDataSet(chartEsNew.predictList(realValues, alpha));
+        esAlpha.innerHTML = alpha;
+        const cpuLoadEsPredicted = predictedDataSet(esData.predictList(realValues, alpha));
         chartEs = lineChart(es, LABELS, [CPU_LOAD_REAL, cpuLoadEsPredicted]);
         setEsMistake(alpha);
     };
 }
 
-chartMa = buildChart(chartMaNew);
-chartWma = buildChart(chartWmaNew);
-chartEs = buildChart(chartEsNew);
+chartMa = buildChart(maData);
+chartWma = buildChart(wmaData);
+chartEs = buildChart(esData);
 
 // set mistakes //
 const mistakeText = 'Average mistake = ';
 
-function setWmaMistake(prevRate = chartWmaNew.prevRate) {
+function setWmaMistake(prevRate = wmaData.prevRate) {
     document.getElementById("wmaMistake").innerHTML =
-        mistakeText + averageMistake(realValues, chartWmaNew.predictList(realValues, prevRate));
+        mistakeText + averageMistake(realValues, wmaData.predictList(realValues, prevRate));
 }
 
 function setMaMistake() {
     document.getElementById("maMistake").innerHTML =
-        mistakeText + averageMistake(realValues, chartMaNew.predictList(realValues));
+        mistakeText + averageMistake(realValues, maData.predictList(realValues));
 }
 
-function setEsMistake(alpha = chartEsNew.alpha) {
+function setEsMistake(alpha = esData.alpha) {
     document.getElementById("esMistake").innerHTML =
-        mistakeText + averageMistake(realValues, chartEsNew.predictList(realValues, alpha));
+        mistakeText + averageMistake(realValues, esData.predictList(realValues, alpha));
 }
 
 setMaMistake();
