@@ -1,6 +1,20 @@
 'use strict';
 
 let btnBestFit = document.getElementById('bestFit');
+
+let dataset1 = document.getElementById('dataset1');
+let dataset2 = document.getElementById('dataset2');
+let dataset3 = document.getElementById('dataset3');
+dataset1.onclick = () => changeDataSet(DATA_SET_1);
+dataset2.onclick = () => changeDataSet(DATA_SET_2);
+dataset3.onclick = () => changeDataSet(DATA_SET_3);
+
+function changeDataSet(dataSet) {
+    realValues = dataSet;
+    drawAll();
+}
+
+let cpuLoadReal; // data set of real metrics (common for all charts)
 let chartMa, chartWma, chartEs, chartDes;
 
 const PURPLE = 'rgb(150, 99, 132)';
@@ -8,8 +22,15 @@ const BLUE = 'rgb(99, 99, 132)';
 const MISTAKE_TEXT = 'Average mistake = ';
 
 // todo: make generation, not hard code
-const EXPONENTIAL_DATA_SET = [40, 43, 40, 47, 45, 52, 50, 60, 55, 50, 40, 27, 34, 36, 45];
-const realValues = [40, 43, 40, 47, 45, 52, 50, 60, 55, 50, 40, 27, 34, 36, 45];
+const DATA_SET_1 = [30, 32, 35, 40, 38, 51, 50, 49, 55, 50, 40, 59, 35, 36, 40]; // DES
+
+// const DATA_SET_2 = [40, 43, 40, 47, 45, 52, 50, 60, 55, 50, 40, 27, 34, 36, 45]; // ES
+const DATA_SET_2 = [40, 43, 40, 47, 45, 52, 50, 60, 55, 64, 62, 69, 74, 75, 80];
+
+const DATA_SET_3 = [30, 40, 50, 30, 40, 50, 30, 40, 50, 30, 40, 50, 30, 40, 50];
+
+let realValues = DATA_SET_1;
+
 const LABELS = ['10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00',
     '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:30'];
 
@@ -30,7 +51,9 @@ function dataSet(name, dataList, color = BLUE) {
     };
 }
 
-const CPU_LOAD_REAL = dataSet("CPU load (%) - real", realValues, PURPLE);
+function drawCpuLoadReal() {
+    cpuLoadReal = dataSet("CPU load (%) - real", realValues, PURPLE);
+}
 
 let predictedDataSet = (dataList) => dataSet("CPU load (%) - predicted", dataList, BLUE);
 
@@ -233,8 +256,9 @@ let desData = {
 let charts = [maData, wmaData, esData, desData];
 
 function buildChart(chartData) {
+    drawCpuLoadReal();
     const cpuLoadPredicted = predictedDataSet(chartData.predictList(realValues));
-    return lineChart(chartData.context, LABELS, [CPU_LOAD_REAL, cpuLoadPredicted]);
+    return lineChart(chartData.context, LABELS, [cpuLoadReal, cpuLoadPredicted]);
 }
 
 btnBestFit.onclick = function () {
@@ -373,11 +397,14 @@ let desBeta = document.getElementById("desBeta");
     };
 }
 
-// view //
-chartMa = buildChart(maData);
-chartWma = buildChart(wmaData);
-chartEs = buildChart(esData);
-chartDes = buildChart(desData);
-charts.forEach(c => c.setMistake());
+function drawAll() {
+    chartMa = buildChart(maData);
+    chartWma = buildChart(wmaData);
+    chartEs = buildChart(esData);
+    chartDes = buildChart(desData);
+    charts.forEach(c => c.setMistake());
+}
+
+drawAll();
 
 
