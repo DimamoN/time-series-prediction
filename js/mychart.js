@@ -326,6 +326,7 @@ let wmaPrev2Rate = document.getElementById("wmaPrev2Rate");
 
     wmaSlider.oninput = function () {
         wmaData.prevRate = this.value / 100;
+        wmaPrevRate.innerHTML = wmaData.prevRate + '';
         wmaPrev2Rate.innerHTML = (1 - wmaData.prevRate).toFixed(2);
         buildChart(wmaData);
         wmaData.setMistake();
