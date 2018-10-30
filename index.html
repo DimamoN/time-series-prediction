@@ -49,6 +49,23 @@
     <canvas id="esChart"></canvas>
 </div>
 
+<div class="chart">
+    <h2>Double Exponential Smoothing prediction</h2>
+    <p id="desMistake"></p>
+
+    <div class="slideContainer">
+        <p>Alpha (level rate) :   <span id="desAlpha"></span>
+        </p>
+        <input type="range" min="0" max="100" value="50" class="slider" id="desSliderAlpha">
+
+        <p>Beta (trend rate) :   <span id="desBeta"></span>
+        </p>
+        <input type="range" min="0" max="100" value="50" class="slider" id="desSliderBeta">
+    </div>
+
+    <canvas id="desChart"></canvas>
+</div>
+
 
 <script src="js/mychart.js"></script>
 </body>

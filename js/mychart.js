@@ -1,7 +1,7 @@
 'use strict';
 
 let btnBestFit = document.getElementById('bestFit');
-let chartMa, chartWma, chartEs;
+let chartMa, chartWma, chartEs, chartDes;
 
 const PURPLE = 'rgb(150, 99, 132)';
 const BLUE = 'rgb(99, 99, 132)';
@@ -175,7 +175,62 @@ let esData = {
     }
 };
 
-let charts = [maData, wmaData, esData];
+let desData = {
+    alpha: 0.75,
+    beta: 0.5,
+
+    context: document.getElementById('desChart').getContext('2d'),
+
+    predict: function (level, trend) {
+        return level + trend;
+    },
+
+    calcLevel : (realValue, prevLevel, prevTrend, alpha = this.alpha) => {
+        return alpha * (realValue) + (1 - alpha) * (prevLevel + prevTrend);
+    },
+
+    calcTrend : (level, prevLevel, prevTrend, beta = this.beta) => {
+        return beta * (level - prevLevel) + (1 - beta) * prevTrend;
+    },
+
+    predictList: function (realValues, alpha = this.alpha, beta = this.beta) {
+
+        let predictedValues = [];
+        let levels = [];
+        let trends = [];
+
+        for (let i = 0; i < realValues.length; ++i) {
+
+            const calc = () => {
+                levels[i] = this.calcLevel(realValues[i - 1], levels[i - 1], trends[i - 1], alpha);
+                trends[i] = this.calcTrend(levels[i], levels[i - 1], trends[i - 1], beta);
+            };
+
+            if (i === 0) {
+                predictedValues[i] = 0;
+                levels[i] = 0;
+                trends[i] = 0;
+            }
+            else if (i === 1) {
+                predictedValues[i] = realValues[i - 1];
+                calc();
+            }
+            else {
+                calc();
+                predictedValues[i] = this.predict(levels[i - 1], trends[i - 1]);
+            }
+        }
+        return predictedValues;
+    },
+
+    // view
+    setMistake: function () {
+        document.getElementById("desMistake").innerHTML =
+            MISTAKE_TEXT + averageMistake(realValues, this.predictList(realValues, this.alpha));
+    }
+};
+
+let charts = [maData, wmaData, esData, desData];
 
 function buildChart(chartData) {
     const cpuLoadPredicted = predictedDataSet(chartData.predictList(realValues));
@@ -210,11 +265,11 @@ btnBestFit.onclick = function () {
         // best fit ES
         let minMistake = '99999';
         let alpha = esData.alpha;
-        for (let i = 0; i <= 100; ++i) {
-            const mistake = averageMistake(realValues, esData.predictList(realValues, i / 100));
+        for (let a = 0; a <= 100; ++a) {
+            const mistake = averageMistake(realValues, esData.predictList(realValues, a / 100));
             if (parseFloat(mistake) < parseFloat(minMistake)) {
                 minMistake = mistake;
-                alpha = (i / 100).toFixed(2);
+                alpha = (a / 100).toFixed(2);
             }
         }
         document.getElementById("esMistake").innerHTML = MISTAKE_TEXT + minMistake;
@@ -226,6 +281,38 @@ btnBestFit.onclick = function () {
         buildChart(esData);
         esData.setMistake();
     }
+
+    {
+        // best fit DES
+        let minMistake = '99999';
+        let alpha = desData.alpha;
+        let beta = desData.beta;
+
+        for (let a = 0; a <= 100; ++a) {
+            for (let b = 0; b <= 100; ++b) {
+                const mistake = averageMistake(realValues, desData.predictList(realValues, a / 100, b / 100));
+
+                if (parseFloat(mistake) < parseFloat(minMistake)) {
+                    minMistake = mistake;
+                    alpha = (a / 100).toFixed(2);
+                    beta = (b / 100).toFixed(2);
+                }
+            }
+        }
+
+        document.getElementById("desMistake").innerHTML = MISTAKE_TEXT + minMistake;
+        desSliderA.value = alpha * 100;
+        desSliderB.value = beta * 100;
+        desAlpha.innerHTML = alpha + '';
+        desBeta.innerHTML = beta + '';
+
+        //update chart
+        desData.alpha = alpha;
+        desData.beta = beta;
+        buildChart(desData);
+        desData.setMistake();
+    }
+
 };
 
 // WMA SLIDER
@@ -260,10 +347,36 @@ let esAlpha = document.getElementById("esAlpha");
     };
 }
 
+// DES SLIDER
+let desSliderA = document.getElementById("desSliderAlpha");
+let desSliderB = document.getElementById("desSliderBeta");
+let desAlpha = document.getElementById("desAlpha");
+let desBeta = document.getElementById("desBeta");
+{
+    // set default values
+    desAlpha.innerHTML = '0.75';
+    desBeta.innerHTML = '0.5';
+
+    desSliderA.oninput = function () {
+        desData.alpha = this.value / 100;
+        desAlpha.innerHTML = desData.alpha;
+        buildChart(desData);
+        desData.setMistake();
+    };
+
+    desSliderB.oninput = function () {
+        desData.beta = this.value / 100;
+        desBeta.innerHTML = desData.beta;
+        buildChart(desData);
+        desData.setMistake();
+    };
+}
+
 // view //
 chartMa = buildChart(maData);
 chartWma = buildChart(wmaData);
 chartEs = buildChart(esData);
+chartDes = buildChart(desData);
 charts.forEach(c => c.setMistake());
 
 
