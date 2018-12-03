@@ -20,6 +20,7 @@ let chartMa, chartWma, chartEs, chartDes;
 const PURPLE = 'rgb(150, 99, 132)';
 const BLUE = 'rgb(99, 99, 132)';
 const MISTAKE_TEXT = 'Average mistake = ';
+const ABS_MISTAKE_TEXT = 'Average absolute mistake = ';
 
 // todo: make generation, not hard code
 const DATA_SET_1 = [30, 32, 35, 40, 38, 51, 50, 49, 55, 50, 40, 59, 35, 36, 40]; // DES
@@ -98,6 +99,17 @@ function averageMistake(realList, predictedList) {
     return (allMistake / realList.length).toFixed(2);
 }
 
+function averageAbsoluteMistake(realList, predictedList) {
+    if (realList.length !== predictedList.length) {
+        throw 'real and predicted lists must be the same length';
+    }
+    let allMistake = 0;
+    for (let i = 0; i < realList.length; i++) {
+        allMistake += Math.abs(realList[i] - predictedList[i]) / realList[i];
+    }
+    return (allMistake / realList.length).toFixed(2);
+}
+
 let maData = {
     context: document.getElementById('maChart').getContext('2d'),
     /**
@@ -125,11 +137,13 @@ let maData = {
         }
         return predictedValues;
     },
-    
+
     // view
     setMistake: function () {
         document.getElementById("maMistake").innerHTML =
             MISTAKE_TEXT + averageMistake(realValues, maData.predictList(realValues));
+        document.getElementById("maAbsMistake").innerHTML =
+            ABS_MISTAKE_TEXT + averageAbsoluteMistake(realValues, maData.predictList(realValues));
     }
 };
 
@@ -165,6 +179,8 @@ let wmaData = {
     setMistake: function() {
         document.getElementById("wmaMistake").innerHTML =
             MISTAKE_TEXT + averageMistake(realValues, wmaData.predictList(realValues, this.prevRate));
+        document.getElementById("wmaAbsMistake").innerHTML =
+            ABS_MISTAKE_TEXT + averageAbsoluteMistake(realValues, wmaData.predictList(realValues));
     }
 };
 
@@ -195,6 +211,8 @@ let esData = {
     setMistake: function () {
         document.getElementById("esMistake").innerHTML =
             MISTAKE_TEXT + averageMistake(realValues, esData.predictList(realValues, this.alpha));
+        document.getElementById("esAbsMistake").innerHTML =
+            ABS_MISTAKE_TEXT + averageAbsoluteMistake(realValues, esData.predictList(realValues));
     }
 };
 
@@ -250,6 +268,8 @@ let desData = {
     setMistake: function () {
         document.getElementById("desMistake").innerHTML =
             MISTAKE_TEXT + averageMistake(realValues, this.predictList(realValues, this.alpha));
+        document.getElementById("desAbsMistake").innerHTML =
+            ABS_MISTAKE_TEXT + averageAbsoluteMistake(realValues, desData.predictList(realValues));
     }
 };
 
@@ -407,4 +427,4 @@ function drawAll() {
 
 drawAll();
 
-
+console.log(desData.predictList(DATA_SET_1));

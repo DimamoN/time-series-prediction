@@ -24,12 +24,14 @@
 <div class="chart firstChart">
     <h2>Moving average prediction</h2>
     <p id="maMistake"></p>
+    <p id="maAbsMistake"></p>
     <canvas id="maChart"></canvas>
 </div>
 
 <div class="chart">
     <h2>Weighted Moving average prediction</h2>
     <p id="wmaMistake"></p>
+    <p id="wmaAbsMistake"></p>
 
     <div class="slideContainer">
         <p>Previous :   <span id="wmaPrevRate"></span>
@@ -44,6 +46,7 @@
 <div class="chart">
     <h2>Exponential Smoothing prediction</h2>
     <p id="esMistake"></p>
+    <p id="esAbsMistake"></p>
 
     <div class="slideContainer">
         <p>Alpha :   <span id="esAlpha"></span>
@@ -57,6 +60,7 @@
 <div class="chart">
     <h2>Double Exponential Smoothing prediction</h2>
     <p id="desMistake"></p>
+    <p id="desAbsMistake"></p>
 
     <div class="slideContainer">
         <p>Alpha (level rate) :   <span id="desAlpha"></span>
